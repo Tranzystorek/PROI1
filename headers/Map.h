@@ -1,7 +1,9 @@
 namespace Constants
 {
     typedef enum {EASY, HARD} Difficulty;
-    //typedef enum {SMALL, MEDIUM, LARGE} Size;
+    typedef enum {SMALL, MEDIUM, LARGE} Size;
+
+    typedef enum {GRND = ' ', WALL = '#', EXPL = '@', MINE = 'X'} Tiles;
 
     struct Dim
     {
@@ -18,15 +20,17 @@ class Map
 {
 public:
 
-    Map(int w, int h, Constants::Size s, Constants::Difficulty d)
-        : width_(w), height_(h), size_(s), difficulty_(d) {};
+    Map(int w = Constants::SIZES[Constants::SMALL].w,
+        int h = Constants::SIZES[Constants::SMALL].h,
+        Constants::Size s = Constants::SMALL,
+        Constants::Difficulty d = Constants::EASY);
 
     int getWidth() const {return width_;}
     int getHeight() const {return height_;}
 
     Constants::Difficulty getDifficulty() const {return difficulty_;}
 
-    Constants::Size getSize() const {return size_};
+    Constants::Size getSize() const {return size_;}
 
 private:
 
