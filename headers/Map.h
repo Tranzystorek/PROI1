@@ -1,42 +1,48 @@
+#include "Tile.h"
+
 namespace Constants
 {
-    typedef enum {EASY, HARD} Difficulty;
+    typedef enum {EASY, NORMAL, HARD} Difficulty;
     typedef enum {SMALL, MEDIUM, LARGE} Size;
 
-    typedef enum {GRND = ' ', WALL = '#', EXPL = '@', MINE = 'X'} Tiles;
-
-    struct Dim
+    struct Dims
     {
-        Dim(int ww, int hh) : w(ww), h(hh) {};
+        Dims(int ww = 0, int hh = 0) : w(ww), h(hh) {};
 
         int w;
         int h;
     };
 
-    const Dim SIZES[] = {Dim(50, 50), Dim(100, 100), Dim(200, 200)};
+    const Dims SIZES[] = {Dims(50, 15), Dims(70, 20), Dims(100, 40)};
+
+    const int MAX_W = 100;
+    const int MAX_H = 40;
 }
 
 class Map
 {
+private:
+
+    typedef Constants::Dims Dims;
+    typedef Constants::Size Size;
+    typedef Constants::Difficulty Difficulty;
+
 public:
 
-    Map(int w = Constants::SIZES[Constants::SMALL].w,
-        int h = Constants::SIZES[Constants::SMALL].h,
-        Constants::Size s = Constants::SMALL,
-        Constants::Difficulty d = Constants::EASY);
+    Map(Size s = Constants::SMALL,
+        Difficulty d = Constants::EASY);
 
-    int getWidth() const {return width_;}
-    int getHeight() const {return height_;}
+    int getWidth() const {return dims_.w;}
+    int getHeight() const {return dims_.h;}
 
     Constants::Difficulty getDifficulty() const {return difficulty_;}
-
     Constants::Size getSize() const {return size_;}
 
 private:
 
-    int width_;
-    int height_;
+    Tile map_[Constants::MAX_H][Constants::MAX_W];
 
-    Constants::Difficulty difficulty_;
-    Constants::Size size_;
+    Dims dims_;
+    Difficulty difficulty_;
+    Size size_;
 };
