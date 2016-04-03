@@ -29,7 +29,7 @@ std::string Map::toString() const
         res += "|\n";
     }
 
-    //generate frame
+    //generate frame (continued)
     res += ' ';
 
     for(int i=0;i<dims_.w;i++)

@@ -12,7 +12,7 @@ public:
 
     Map generateMap();
 
-    void createWall(int x, int y, int length, int segment_len = 2);
+    void createWall(int x, int y, int length, int min_straight = 2, int max_straight = 0);
 
 private:
 
