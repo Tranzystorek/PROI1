@@ -3,7 +3,7 @@
 #include <cstdlib>
 #include <ctime>
 
-#include <iostream>
+//#include <iostream>
 
 //stupid method -> make sure that the wall doesn't exceed map bounds
 //writes to buffer only
@@ -127,13 +127,104 @@ void Generator::createWall(int x, int y, int length, int min_straight, int max_s
             //CASE E
         }//switch
 
-        std::cout<<dir<<" "<<l<<std::endl;
-
         currL += l;
     }//while
 
     result_ = buffer_;
 }//createWall
+
+bool Generator::isPlayable()
+{
+    const int W = buffer_.getWidth();
+    const int H = buffer_.getHeight();
+    const int LEN = W * H;
+
+    bool *visited = new bool[LEN];
+
+    for(int i=0;i<LEN;i++)
+    {
+        if(buffer_.map_[i / W][i % W].isObstacle())
+            visited[i] = true;
+
+        else
+            visited[i] = false;
+    }
+
+    struct Pos
+    {
+        Pos(int xx=0, int yy=0) : x(xx), y(yy) {}
+
+        int x;
+        int y;
+    } *stack = new Pos[LEN];
+
+    int it = 0; //stack navigation
+
+    Pos currPos; //current position
+    int nPos;
+
+    bool stop = false;
+
+    //find first passable tile
+    for(int j=0;j<H;j++)
+    {
+        for(int i=0;i<W;i++)
+            if(buffer_.map_[j][i].isPassable())
+            {
+                stack[it].x = i;
+                stack[it++].y = j;
+
+                stop = true;
+
+                break;
+            }//if
+
+        if(stop)
+            break;
+    }//for
+
+    while(it)
+    {
+        //std::cout << "stack: " << it << std::endl;
+
+        currPos = stack[it - 1];
+        it--;
+
+        //std::cout << currPos.x << " " << currPos.y << std::endl;
+
+        nPos = currPos.x + currPos.y * W;
+
+        if(!visited[nPos])
+        {
+            visited[nPos] = true;
+
+            if(currPos.x > 0
+                && !visited[currPos.x - 1 + currPos.y * W])
+
+                stack[it++] = Pos(currPos.x - 1, currPos.y);
+
+            if(currPos.x < W - 1
+                && !visited[currPos.x + 1 + currPos.y * W])
+
+                stack[it++] = Pos(currPos.x + 1, currPos.y);
+
+            if(currPos.y > 0
+                && !visited[currPos.x + (currPos.y - 1) * W])
+
+                stack[it++] = Pos(currPos.x, currPos.y - 1);
+
+            if(currPos.y < H - 1
+                && !visited[currPos.x + (currPos.y + 1) * W])
+                stack[it++] = Pos(currPos.x, currPos.y + 1);
+        }//if
+    }//while
+
+    for(int i=0;i<LEN;i++)
+        if(!visited[i])
+            return false;
+
+    return true;
+}//isPlayable
 
 Map Generator::generateMap()
 {

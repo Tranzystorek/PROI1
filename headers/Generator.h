@@ -14,6 +14,8 @@ public:
 
     void createWall(int x, int y, int length, int min_straight = 2, int max_straight = 0);
 
+    bool isPlayable();
+
 private:
 
     void createWallStrip(int x, int y, int length, unsigned char flags = NORMAL);
