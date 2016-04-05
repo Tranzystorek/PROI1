@@ -3,7 +3,17 @@
 #include <cstdlib>
 #include <ctime>
 
-//#include <iostream>
+#include <iostream>
+
+Generator::Generator(Constants::Size s, Constants::Difficulty d)
+{
+    buffer_ = Map(s, d);
+    result_ = Map(s, d);
+
+    numberOfWalls = 0;
+
+    generated_ = false;
+}
 
 //stupid method -> make sure that the wall doesn't exceed map bounds
 //writes to buffer only
@@ -49,6 +59,35 @@ void Generator::createWallStrip(int x, int y, int length, unsigned char flags)
     }
 }//createWallStrip
 
+//writes to buffer only
+void Generator::placeObstacles(int n, Tile::TileType t)
+{
+    const int W = buffer_.getWidth();
+    const int H = buffer_.getHeight();
+
+    int tx, ty;
+    int i = 0;
+
+    srand(time(NULL));
+
+    while(i < n)
+    {
+        tx = rand() % W;
+        ty = rand() % H;
+
+        if(buffer_.map_[ty][tx].isObstacle())
+            continue;
+
+        buffer_.map_[ty][tx] = Tile(t);
+
+        //std::cout << i << " obstacles " << (char)t << std::endl;
+
+        i++;
+    }
+}//placeMines
+
+//see createWallStrip
+//final wall length is APPROXIMATELY equal to the length argument
 void Generator::createWall(int x, int y, int length, int min_straight, int max_straight)
 {
     if(!max_straight)
@@ -129,10 +168,10 @@ void Generator::createWall(int x, int y, int length, int min_straight, int max_s
 
         currL += l;
     }//while
-
-    result_ = buffer_;
 }//createWall
 
+//simple DFS algorithm
+//updates numberOfWalls on true
 bool Generator::isPlayable()
 {
     const int W = buffer_.getWidth();
@@ -141,15 +180,25 @@ bool Generator::isPlayable()
 
     bool *visited = new bool[LEN];
 
+    Tile *temp;
+    int wallCounter = 0;
+
+    //mark appropriate tiles as visited and update numberOfWalls
     for(int i=0;i<LEN;i++)
     {
-        if(buffer_.map_[i / W][i % W].isObstacle())
+        temp = &buffer_.map_[i / W][i % W];
+
+        if(temp->isWall())
+            wallCounter++;
+
+        if(temp->isObstacle() && !temp->isDestroyable())
             visited[i] = true;
 
         else
             visited[i] = false;
     }
 
+    //local structure for storing position
     struct Pos
     {
         Pos(int xx=0, int yy=0) : x(xx), y(yy) {}
@@ -158,15 +207,15 @@ bool Generator::isPlayable()
         int y;
     } *stack = new Pos[LEN];
 
-    int it = 0; //stack navigation
+    int it = 0; //stack navigation (points at the free space on top)
 
     Pos currPos; //current position
     int nPos;
 
-    bool stop = false;
+    bool stop = false; //escape outer for loop
 
     //find first passable tile
-    for(int j=0;j<H;j++)
+    for(int j=0;!stop && j<H;j++)
     {
         for(int i=0;i<W;i++)
             if(buffer_.map_[j][i].isPassable())
@@ -178,9 +227,6 @@ bool Generator::isPlayable()
 
                 break;
             }//if
-
-        if(stop)
-            break;
     }//for
 
     while(it)
@@ -219,19 +265,96 @@ bool Generator::isPlayable()
         }//if
     }//while
 
+    delete[] stack;
+
     for(int i=0;i<LEN;i++)
         if(!visited[i])
+        {
+            delete[] visited;
+
             return false;
+        }
+
+    delete[] visited;
+
+    numberOfWalls = wallCounter;
 
     return true;
 }//isPlayable
 
-Map Generator::generateMap()
+//generator main logic
+void Generator::generateMap()
 {
+    if(generated_)
+        return;
 
+    const int W = buffer_.getWidth();
+    const int H = buffer_.getHeight();
+    const int NTILES = W * H;
+
+    const Constants::Difficulty D = buffer_.getDifficulty();
+
+    const int NWALLS = Constants::WALL_CAPS[D] * NTILES / 100;
+    const int NMINES = Constants::MINE_CAPS[D] * NTILES / 100;
+    const int NEXPLS = Constants::EXPL_CAPS[D] * NTILES / 100;
+
+    const int SINGLE_WALL = NWALLS * Constants::SINGLE_WALL_PERCENT / 100;
+    const int MIN_WALL_SEGM = SINGLE_WALL * Constants::MIN_WALL_PERCENT / 100;
+    const int MAX_WALL_SEGM = SINGLE_WALL * Constants::MAX_WALL_PERCENT / 100;
+
+    std::cout << NTILES << " tiles" << std::endl
+              << NWALLS << " walls" << std::endl
+              << NMINES << " mines" << std::endl
+              << NEXPLS << " expls" << std::endl;
+
+    int tx, ty;
+
+    srand(time(NULL));
+
+    Map copy;
+
+    int previous;
+    int percent;
+
+    while(numberOfWalls <= NWALLS)
+    {
+        copy = buffer_;
+
+        tx = rand() % W;
+        ty = rand() % H;
+
+        createWall(tx, ty, SINGLE_WALL, MIN_WALL_SEGM, MAX_WALL_SEGM);
+
+        if(!isPlayable())
+            buffer_ = copy;
+
+        if(previous != numberOfWalls)
+        {
+            previous = numberOfWalls;
+
+            percent = 100 * numberOfWalls / NWALLS;
+
+            std::cout << (percent > 100 ? 100 : percent) << "%" << std::endl;
+        }
+    }
+
+    copy = buffer_;
+
+    do {
+        buffer_ = copy;
+
+        placeObstacles(NMINES, Tile::MINE);
+    }
+    while(!isPlayable());
+
+    placeObstacles(NEXPLS, Tile::EXPL);
+
+    result_ = buffer_;
+
+    generated_ = true;
 }//generateMap
 
-void Generator::resetBuffer()
+void Generator::reset()
 {
-
+    Generator(buffer_.getSize(), buffer_.getDifficulty());
 }//resetBuffer

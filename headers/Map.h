@@ -19,8 +19,8 @@ public:
     int getWidth() const {return dims_.w;}
     int getHeight() const {return dims_.h;}
 
-    Constants::Difficulty getDifficulty() const {return difficulty_;}
-    Constants::Size getSize() const {return size_;}
+    Difficulty getDifficulty() const {return difficulty_;}
+    Size getSize() const {return size_;}
 
     std::string toString() const;
 
