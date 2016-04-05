@@ -35,5 +35,7 @@ std::string Map::toString() const
     for(int i=0;i<dims_.w;i++)
         res += '^';
 
+    res += '\n';
+
     return res;
 }//toString
