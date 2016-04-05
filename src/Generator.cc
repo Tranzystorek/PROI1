@@ -334,7 +334,7 @@ void Generator::generateMap()
 
             percent = 100 * numberOfWalls / NWALLS;
 
-            std::cout << (percent > 100 ? 100 : percent) << "%" << std::endl;
+            std::cout << (percent > 100 ? 100 : percent) << '%' << std::endl;
         }
     }
 
@@ -354,7 +354,19 @@ void Generator::generateMap()
     generated_ = true;
 }//generateMap
 
+//stupid method -> verify coordinates before calling
+void Generator::editTile(int x, int y, Tile::TileType t)
+{
+    result_.map_[x][y] = Tile(t);
+
+    isPlayable();
+}//editTile
+
 void Generator::reset()
 {
-    Generator(buffer_.getSize(), buffer_.getDifficulty());
-}//resetBuffer
+    result_ = buffer_ = Map(buffer_.getSize(), buffer_.getDifficulty());
+
+    numberOfWalls = 0;
+
+    generated_ = false;
+}//reset

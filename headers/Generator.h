@@ -21,6 +21,8 @@ public:
 
     bool isGenerated() const {return generated_;}
 
+    void editTile(int x, int y, Tile::TileType t);
+
     void reset();
 
 private:
